@@ -4,8 +4,9 @@ public class Aluno
 {
     public Aluno() { }
 
-    public Aluno(string nome, string sobrenome, string telefone)
+    public Aluno(int id, string nome, string sobrenome, string telefone)
     {
+        Id = id;
         Nome = nome;
         Sobrenome = sobrenome;
         Telefone = telefone;

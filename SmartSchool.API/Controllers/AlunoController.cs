@@ -1,49 +1,30 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using SmartSchool.API.Data;
 using SmartSchool.API.Models;
-using System.Runtime.InteropServices;
 
 namespace SmartSchool.API.Controllers;
 [Route("[controller]")]
 [ApiController]
 public class AlunoController : ControllerBase
 {
-    public List<Aluno> Alunos = new List<Aluno>()
+    private readonly DataContext _context;
+
+    public AlunoController(DataContext context)
     {
-        new Aluno()
-        {
-            Id = 1,
-            Nome = "Marcos",
-            Sobrenome = "Almeida",
-            Telefone = "1231312312"
-        },
-        new Aluno()
-        {
-            Id = 2,
-            Nome = "Marta",
-            Sobrenome = "Kent",
-            Telefone = "5165465165"
-        },
-        new Aluno()
-        {
-            Id = 3,
-            Nome = "Laura",
-            Sobrenome = "Maria",
-            Telefone = "64645189544"
-        },
-    };
-    
-    public AlunoController() { }
+        _context = context;
+    }
 
     [HttpGet]
     public IActionResult Get()
     {
-        return Ok(Alunos);
+        return Ok(_context.Alunos);
     }
 
     [HttpGet("byId/{id:int}")]
     public IActionResult GetById([FromRoute] int id)
     {
-        var aluno = Alunos.FirstOrDefault(a => a.Id == id);
+        var aluno = _context.Alunos.FirstOrDefault(a => a.Id == id);
         if (aluno == null) return BadRequest();
 
         return Ok(aluno);
@@ -55,7 +36,7 @@ public class AlunoController : ControllerBase
         [FromQuery] string nome,
         [FromQuery] string sobrenome)
     {
-        Aluno? aluno = Alunos.FirstOrDefault(a =>
+        Aluno? aluno = _context.Alunos.FirstOrDefault(a =>
             a.Nome.ToLower().Contains(nome.ToLower()) &&
             a.Sobrenome.ToLower().Contains(sobrenome.ToLower()));
 
@@ -68,7 +49,8 @@ public class AlunoController : ControllerBase
     public IActionResult Post([FromBody] Aluno aluno)
     {
         if (aluno == null) return BadRequest();
-        Alunos.Add(aluno);
+        _context.Alunos.Add(aluno);
+        _context.SaveChanges();
 
         return Ok(aluno);
     }
@@ -78,8 +60,14 @@ public class AlunoController : ControllerBase
         [FromRoute] int id,
         [FromBody] Aluno aluno)
     {
-        if (aluno == null) return BadRequest();
-        Alunos.Add(aluno);
+        var alunoToPut = _context.Alunos
+            .AsNoTracking()
+            .FirstOrDefault(a => a.Id == id);
+        var message = "Aluno não encontrado.";
+        if (alunoToPut == null) return BadRequest(message);
+
+        _context.Alunos.Update(aluno);
+        _context.SaveChanges();
 
         return Ok(aluno);
     }
@@ -89,6 +77,15 @@ public class AlunoController : ControllerBase
         [FromRoute] int id,
         [FromBody] Aluno aluno)
     {
+        var alunoToPatch = _context.Alunos
+            .AsNoTracking()
+            .FirstOrDefault(a => a.Id == id);
+        var message = "Aluno não encontrado.";
+        if (alunoToPatch == null) return BadRequest(message);
+
+        _context.Alunos.Update(aluno);
+        _context.SaveChanges();
+        
         return Ok(aluno);
     }
 
@@ -96,10 +93,12 @@ public class AlunoController : ControllerBase
     public IActionResult Delete(
         [FromRoute] int id)
     {
-        var alunoToRemove = Alunos.FirstOrDefault(a => a.Id == id);
-        if (alunoToRemove == null) return BadRequest();
+        var alunoToRemove = _context.Alunos.FirstOrDefault(a => a.Id == id);
+        var message = "Aluno não encontrado.";
+        if (alunoToRemove == null) return BadRequest(message);
 
-        Alunos.Remove(alunoToRemove);
+        _context.Alunos.Remove(alunoToRemove);
+        _context.SaveChanges();
 
         return Ok();
     }

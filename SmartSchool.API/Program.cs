@@ -1,17 +1,27 @@
-﻿using SmartSchool.API.Utils;
+﻿using Microsoft.EntityFrameworkCore;
+using SmartSchool.API.Data;
+using SmartSchool.API.Utils;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// -- SERVICES --
 
-builder.Services.AddControllers(c => c.UseRoutePrefix("api"));
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// DbContext:
+var connectionString = builder.Configuration.GetConnectionString("Default");
+builder.Services.AddDbContext<DataContext>(
+    context => context.UseSqlite(connectionString));
+
+// Controllers:
+builder.Services.AddControllers(context => context.UseRoutePrefix("api"));
+
+// OpenAPI/Swagger:
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+
+// -- HTTP REQUEST PIPELINE --
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
